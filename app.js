@@ -2,6 +2,56 @@
 var linebot = require('linebot');
 
 let MAX_ROOM = 2;
+class _lists {
+  constructor(roomId) {
+    this.lists = new Map();
+    console.log("_lists constructor!");
+    return this;
+  }
+  
+  ls() {
+    for (var [key, value] of this.lists) {
+      console.log(key + ', ' + value);
+    }
+  }
+}
+
+class _allLists {
+  constructor(){
+    this.allLists = new Map();
+    console.log("_allLists constructor!");
+  }
+
+  newRoom(roomId) {
+    if(this.allLists.size < MAX_ROOM) {
+      // const hashListId = crypto.createHmac('sha256', roomId)
+      //                   .update('I love Poling')
+      //                   .digest('hex');
+      // console.log(hashListId);
+      this.allLists.set(roomId, new _lists(roomId));
+      if(typeof(this.allLists.get(roomId) === "objects")) {
+        return this.allLists.get(roomId);
+      }
+    }
+  }
+
+  ls() {
+    for (var [key, value] of this.allLists) {
+      console.log(key + ', ' + value);
+    }
+  }
+
+  getRoom(roomId) {
+    return this.allLists.get(roomId);
+  }
+  delRoom(roomId) {
+    this.allLists.delete(roomId);
+  }
+}
+
+console.log("start new _allLists()");
+var alllines = new _allLists();
+console.log("end new _allLists()");
 
 // 用於辨識Line Channel的資訊
 var bot = linebot({
@@ -26,19 +76,33 @@ var checkRe = new RegExp(orderWhat
   + type3_quantity + type3
   );
 
-var _lists = new Map();
-
-// 當有人傳送訊息給Bot時
-bot.on('message', function (event) {
+bot
+.on('join', function (event) {
+  console.log("join");
+  alllines.newRoom(event.source.roomId);
+})
+.on('leave', function (event) {
+  console.log("leave");
+  alllines.delRoom(event.source.roomId);
+})
+.on('message', function (event) {
+  // 當有人傳送訊息給Bot時
   // event.message.text是使用者傳給bot的訊息
 
   var _cmd = event.message.text + '';
 
   console.log(event.message.text);
+  if(_cmd === 'join') {
+    console.log("cmd join");
+    alllines.add(event.source.roomId);
+  } else if(_cmd === 'leave'){
+    console.log("cmd leave");
+    alllines.delRoom(event.source.roomId);
 
-  if(_cmd === 'l'){
+  } else if(_cmd === 'l'){
     var replyMsg = "";
-  
+    var _lists = alllines.getRoom(event.source.roomId).lists;
+
     console.log(`count=${_lists.size}`);
     for (var [key, value] of _lists) {
       replyMsg += value + "\n"; 
@@ -51,7 +115,7 @@ bot.on('message', function (event) {
         // 當訊息回傳失敗後的處理
         throw(error);
     });
-  } else if (_cmd === 'h') {
+  } else if (_cmd === 'h' || _cmd === '?') {
     var replyMsg = "l: list \n h:cmd list";
     event.reply(replyMsg).then(function (data) {
         // 當訊息成功回傳後的處理
