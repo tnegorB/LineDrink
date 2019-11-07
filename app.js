@@ -65,11 +65,10 @@ console.log("start new _allLists()");
 let alllines = new _allLists();
 console.log("end new _allLists()");
 
-// 用於辨識Line Channel的資訊
 var bot = linebot({
-  channelId: '1653391367',
-  channelSecret: '76a9583ba5ac1acee1ada779b86f076c',
-  channelAccessToken: 'yHtPtrvjY4pFldCAgfCcr0RJmOv32Bqrw4iHfl2UPHXtR5QrzSPvCvjQTYZWJsJmA5lYuLOl6reGlpR/cEOt3FShi34MBnIt7K7PB+Qzt6KYVB0BFysYHBhtctxvzu9WZtxjaTu1udarDXHYMWHO4gdB04t89/1O/w1cDnyilFU='
+  channelId: process.env.channelId,
+  channelSecret: process.env.channelSecret,
+  channelAccessToken: process.env.channelAccessToken
 });
 
 var orderWhat = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,10}';
