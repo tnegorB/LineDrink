@@ -2,6 +2,8 @@
 var linebot = require('linebot');
 
 let MAX_ROOM = process.env.MAX_ROOM || 2;
+let replyMute = process.env.replyMute || false;
+let OOMode = process.env.OOMode || false;
 
 class _lists {
   constructor(roomId) {
@@ -73,9 +75,9 @@ var bot = linebot({
 
 var orderWhat = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,10}';
 var hasSplit = "\\s+";
-var type1_quantity = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,3}';
+var type1_quantity = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,5}';
 var type1 = "糖";
-var type2_quantity = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,3}';
+var type2_quantity = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{1,5}';
 var type2 = "冰";
 var type3_quantity = '[\\' + 'u4e00-' + '\\' + 'u9fa5]{0,3}';
 var type3 = "溫";
@@ -108,10 +110,23 @@ bot
   var _cmd = event.message.text + '';
 
   console.log(event.message.text);
-  if(_cmd === 'join') {
+
+  if (_cmd === 'h' || _cmd === '?') {
+    var replyMsg = "l: list \n \
+                  h:cmd list \n \
+                  mo: mute on\n  \
+                  mf: mute off \n \
+                  oo: 滷肉飯 Mode on\n \
+                  of: 滷肉飯 Mode off\n \
+                  r: showOnlineRoom"
+                  ;
+    event.reply(replyMsg);
+
+  } else if(_cmd === 'join') {
     console.log("cmd join");
     if(alllines.newRoom(event.source.roomId) === null) {
       event.reply("Loading is full.");
+      bot.leaveRoom(event.source.roomId);
     } else {
       event.reply(`Loading: ${alllines.getListSize()}`);
     }
@@ -123,8 +138,23 @@ bot
   } else if(_cmd === 'showRoomId'){
     console.log(`roomId: ${event.source.roomId}`);
 
-  } else if(_cmd === 'showOnlineRoom'){
+  } else if(_cmd === 'showOnlineRoom' || _cmd === 'r'){
     console.log(`rooms: ${alllines.getListSize()}`);
+
+  } else if(_cmd === 'mo'){
+    replyMute = true;
+    event.reply("Bot mute on");
+
+  } else if(_cmd === 'mf'){
+    replyMute = false;
+    event.reply("Bot mute off");
+
+  } else if(_cmd === 'oo'){
+    OOMode = true;
+    event.reply("滷肉飯 Mode on");
+  } else if(_cmd === 'of'){
+    OOMode = false;
+    event.reply("滷肉飯 Mode off");
 
   } else if(_cmd === 'l'){
     try{
@@ -141,16 +171,9 @@ bot
       console.log(e);
     }
 
-  } else if (_cmd === 'h' || _cmd === '?') {
-    var replyMsg = "l: list \n h:cmd list";
-    event.reply(replyMsg).then(function (data) {
-        // 當訊息成功回傳後的處理
-    }).catch(function (error) {
-        // 當訊息回傳失敗後的處理
-        throw(error);
-    });
+  } else if(_cmd.length>0 && _cmd.length !== undefined) {
+    var chkResult = checkRe.test(_cmd);
 
-  } else if(checkRe.test(_cmd)) {
     console.log("parse ok");
     var userName = "";
     var userOrder = event.message.text + "";
@@ -159,6 +182,7 @@ bot
     if(_lists === null) {
       if(alllines.newRoom(event.source.roomId) === null) {
         bot.reply("Loading is full.");
+        bot.leaveRoom(event.source.roomId);
       } else {
         bot.reply(`Loading: ${alllines.getListSize()}`);
       }
@@ -171,13 +195,19 @@ bot
     })
     .then(() => {
       try {
-        //parese data
-        var list = userOrder.split(' ');
-        console.log(event.source.userId + ": "+userName +" " + list);
+        if(OOMode === false) {
+          //parese data
+          var list = userOrder.split(' ');
+          console.log(event.source.userId + ": "+userName +" " + list);
 
-        //add to list
-        _lists.set(event.source.userId, userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
-      }
+          //add to list
+          _lists.set(event.source.userId, userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
+          event.reply("已加入清單:" + userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
+        } else {
+          _lists.set(event.source.userId, userName + ' ' + _cmd);
+          event.reply("已加入清單:" + userName + ' ' + _cmd);
+        }
+      } 
       catch (e) {
         console.log(e);
       }
@@ -185,6 +215,9 @@ bot
 
   } else {
     console.log("parse false");
+
+    if(replyMute === true || event.message.text === undefined) return;
+
     // 準備要回傳的內容
     var replyMsg = `看嘸:${event.message.text}`;
 
