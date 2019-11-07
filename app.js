@@ -140,6 +140,7 @@ bot
 
   } else if(_cmd === 'showOnlineRoom' || _cmd === 'r'){
     console.log(`rooms: ${alllines.getListSize()}`);
+    event.reply(`rooms: ${alllines.getListSize()}`);
 
   } else if(_cmd === 'mo'){
     replyMute = true;
@@ -152,6 +153,7 @@ bot
   } else if(_cmd === 'oo'){
     OOMode = true;
     event.reply("滷肉飯 Mode on");
+
   } else if(_cmd === 'of'){
     OOMode = false;
     event.reply("滷肉飯 Mode off");
@@ -171,9 +173,7 @@ bot
       console.log(e);
     }
 
-  } else if(_cmd.length>0 && _cmd.length !== undefined) {
-    var chkResult = checkRe.test(_cmd);
-
+  } else if(checkRe.test(_cmd)) {
     console.log("parse ok");
     var userName = "";
     var userOrder = event.message.text + "";
@@ -195,23 +195,39 @@ bot
     })
     .then(() => {
       try {
-        if(OOMode === false) {
-          //parese data
-          var list = userOrder.split(' ');
-          console.log(event.source.userId + ": "+userName +" " + list);
+        //parese data
+        var list = userOrder.split(' ');
+        console.log(event.source.userId + ": "+userName +" " + list);
 
-          //add to list
-          _lists.set(event.source.userId, userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
-          event.reply("已加入清單:" + userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
-        } else {
-          _lists.set(event.source.userId, userName + ' ' + _cmd);
-          event.reply("已加入清單:" + userName + ' ' + _cmd);
-        }
+        //add to list
+        _lists.set(event.source.userId, userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
+        event.reply("已加入清單:" + userName + ' ' + list[0] + ' ' + list[1] + ' ' + list[2]);
+
       } 
       catch (e) {
         console.log(e);
       }
     });
+  } else if(OOMode === true) {
+    var _lists = alllines.getRoom(event.source.roomId).getList();
+    if(_lists === null) {
+      if(alllines.newRoom(event.source.roomId) === null) {
+        bot.reply("Loading is full.");
+        bot.leaveRoom(event.source.roomId);
+      } else {
+        bot.reply(`Loading: ${alllines.getListSize()}`);
+      }
+    }
+
+    event.source.profile()
+    .then(function (profile) {
+      userName = profile.displayName;
+    })
+    .then(() => {
+      _lists.set(event.source.userId, userName + ' ' + _cmd);
+      event.reply("已加入清單:" + userName + ' ' + _cmd);
+    });
+
 
   } else {
     console.log("parse false");
