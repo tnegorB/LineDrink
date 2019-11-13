@@ -188,8 +188,12 @@ bot
       userName = profile.displayName;
     })
     .then(() => {
-      _lists.set(event.source.userId, userName + ' ' + _cmd);
-      event.reply("已加入清單:" + userName + ' ' + _cmd);
+      if(event.message.text !== undefined) {
+        _lists.set(event.source.userId, userName + ' ' + _cmd);
+        if(replyMute === true) {
+          event.reply("已加入清單:" + userName + ' ' + _cmd);
+        }
+      }
     });
 
   } else if(checkRe.test(_cmd)) {
