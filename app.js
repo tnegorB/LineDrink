@@ -172,6 +172,25 @@ bot
     } catch(e) {
       console.log(e);
     }
+  } else if(OOMode === true) {
+    var _lists = alllines.getRoom(event.source.roomId).getList();
+    if(_lists === null) {
+      if(alllines.newRoom(event.source.roomId) === null) {
+        bot.reply("Loading is full.");
+        bot.leaveRoom(event.source.roomId);
+      } else {
+        bot.reply(`Loading: ${alllines.getListSize()}`);
+      }
+    }
+
+    event.source.profile()
+    .then(function (profile) {
+      userName = profile.displayName;
+    })
+    .then(() => {
+      _lists.set(event.source.userId, userName + ' ' + _cmd);
+      event.reply("已加入清單:" + userName + ' ' + _cmd);
+    });
 
   } else if(checkRe.test(_cmd)) {
     console.log("parse ok");
@@ -208,26 +227,6 @@ bot
         console.log(e);
       }
     });
-  } else if(OOMode === true) {
-    var _lists = alllines.getRoom(event.source.roomId).getList();
-    if(_lists === null) {
-      if(alllines.newRoom(event.source.roomId) === null) {
-        bot.reply("Loading is full.");
-        bot.leaveRoom(event.source.roomId);
-      } else {
-        bot.reply(`Loading: ${alllines.getListSize()}`);
-      }
-    }
-
-    event.source.profile()
-    .then(function (profile) {
-      userName = profile.displayName;
-    })
-    .then(() => {
-      _lists.set(event.source.userId, userName + ' ' + _cmd);
-      event.reply("已加入清單:" + userName + ' ' + _cmd);
-    });
-
 
   } else {
     console.log("parse false");
