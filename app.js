@@ -196,7 +196,7 @@ bot
     .then(() => {
       try {
         //parese data
-        var list = userOrder.split(' ');
+        var list = userOrder.split(/\s+/);
         console.log(event.source.userId + ": "+userName +" " + list);
 
         //add to list
